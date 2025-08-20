@@ -9,7 +9,7 @@ export const dbConnect = async()=>{
             throw new Error("MONGO_URI is not defined in .env file");
         }
         await mongoose.connect(url)
-        console.log("connection to database successfull")
+        console.log("connection through url successfull")
     } catch (error) {
         console.error("Problem while connecting to database " + error.message)
         process.exit(1);
