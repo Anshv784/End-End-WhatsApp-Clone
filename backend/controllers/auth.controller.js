@@ -94,3 +94,33 @@ export const verifyOtp = async (req, res) => {
     return response(res, 500, "internal server error", { error: error.message });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  const { username, agreed, about } = req.body;
+  const userId = req.user.userId;
+
+  try {
+    const user = await User.findById(userId);
+    const file = req.file;
+
+    if (file) {
+      const uploadResult = await uploadFileToCloudinary(file);
+      user.profilePicture = uploadResult?.secure_url;
+    } else if (req.body.profilePicture) {
+      user.profilePicture = req.body.profilePicture;
+    }
+
+    if (username) user.username = username;
+    if (agreed) user.agreed = agreed;
+    if (about) user.about = about;
+
+    console.log(user);
+
+    await user.save();
+
+    return response(res, 200, "user profile updated successfully", user);
+  } catch (error) {
+    console.error(error);
+    return response(res, 500, "Internal server error");
+  }
+};
