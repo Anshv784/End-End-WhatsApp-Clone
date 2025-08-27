@@ -4,6 +4,7 @@ import { dbConnect } from "../lib/dbConnect.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { authRouter } from "../routes/authRoute.js";
+import { chatRouter } from "../routes/chatRoute.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(cors({
 
 // routes
 app.use("/api/auth", authRouter);
+app.use("/api/chat",chatRouter);
 
 (async () => {
   try {

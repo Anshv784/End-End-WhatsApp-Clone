@@ -88,6 +88,7 @@ export const verifyOtp = async (req, res) => {
       sameSite: "strict",
     });
 
+    console.log("Otp verified")
     return response(res, 200, "otp verified successfully", { token, user });
   } catch (error) {
     console.error(error);
@@ -124,3 +125,36 @@ export const updateProfile = async (req, res) => {
     return response(res, 500, "Internal server error");
   }
 };
+
+export const getAllUsers = async (req, res) => {
+  const loggedInUser = req.user.userId;
+  try {
+    const users = await User.find({ _id: { $ne: loggedInUser } })
+      .select("username profilePicture lastSeen isOnline about phoneNumber phoneSuffix")
+      .lean();
+
+    const usersWithConversation = await Promise.all(
+      users.map(async (user) => {
+        const conversation = await Conversation.findOne({
+          participants: { $all: [loggedInUser, user?._id] }
+        })
+          .populate({
+            path: "lastMessage",
+            select: "content createdAt sender receiver"
+          })
+          .lean();
+
+        return {
+          ...user,
+          conversation: conversation || null
+        };
+      })
+    );
+
+    return response(res, 200, "users retived successfully", usersWithConversation);
+  } catch (error) {
+    console.error(error);
+    return response(res, 500, "Internal server error");
+  }
+};
+
