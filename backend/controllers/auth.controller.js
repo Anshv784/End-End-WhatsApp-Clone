@@ -34,13 +34,13 @@ export const sendOtp = async (req, res) => {
     user = await User.findOne({ phoneNumber });
     if (!user) user = new User({ phoneNumber });
 
-    await sendOtpToPhoneNumber(fullPhoneNumber); // handled by Twilio
+    await sendOtpToPhoneNumber(fullPhoneNumber); // handled by Twilio Service 
     await user.save();
 
     return response(res, 200, "OTP sent to your phone", { phoneNumber });
   } catch (error) {
     console.error(error);
-    return response(res, 500, "internal server error", { error: error.message });
+    return response(res, 500, "Internal server error", { error: error.message });
   }
 };
 

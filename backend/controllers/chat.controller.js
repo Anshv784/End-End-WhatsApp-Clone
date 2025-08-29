@@ -101,6 +101,7 @@ export const getConversation = async (req, res) => {
 };
 
 export const getMessages = async (req, res) => {
+  const { conversationId } = req.params; // 👈 FIX
   const userId = req.user.userId;
   try {
     const conversation = await Conversation.findById(conversationId);
