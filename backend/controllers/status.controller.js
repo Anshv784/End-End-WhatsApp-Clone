@@ -1,7 +1,7 @@
 import Message from "../models/messages.model.js";
 import Status from "../models/status.model.js";
 import response from "../utils/responseHandler.js";
-import uploadFileToCloudinary from "../lib/cloudinaryConfig.js";
+import {uploadFileToCloudinary} from "../lib/cloudinaryConfig.js";
 
 // Create Status
 export const createStatus = async (req, res) => {
@@ -62,7 +62,7 @@ export const createStatus = async (req, res) => {
 };
 
 // Get All Statuses
-export const getStatuses = async (req, res) => {
+export const getStatus = async (req, res) => {
   try {
     const statuses = await Status.find({
       expiresAt: { $gt: new Date() },
