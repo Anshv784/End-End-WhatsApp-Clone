@@ -43,17 +43,15 @@ export const createStatus = async (req, res) => {
       user: userId,
       content: mediaUrl || content,
       contentType: finalContentType,
-      imageOrVideoUrl,
-      messageStatus,
       expiresAt,
     });
 
     await status.save();
 
-    const populatedStatus = await Message.findOne(status?._id)
+    const populatedStatus = await Status.findOne(status?._id)
       .populate("user", "username profilePicture")
       .populate("viewers", "username profilePicture");
-
+      
     return response(res, 201, "Status created Successfully", populatedStatus);
   } catch (error) {
     console.error(error);
@@ -92,20 +90,21 @@ export const viewStatus = async (req, res) => {
     if (!status.viewers.includes(userId)) {
       status.viewers.push(userId);
       await status.save();
-
-    const updateStatus = await Status.findById(statusId)
-        .populate("user", "username profilePicture")
-        .populate("viewers", "username profilePicture");
     } else {
       console.log("user already viewed the status");
     }
 
-    return response(res, 200, "status viewed successfully");
+    const updateStatus = await Status.findById(statusId)
+      .populate("user", "username profilePicture")
+      .populate("viewers", "username profilePicture");
+
+    return response(res, 200, "Status viewed successfully", updateStatus);
   } catch (error) {
     console.error(error);
     return response(res, 500, "Internal server error");
   }
 };
+
 
 // Delete Status
 export const deleteStatus = async (req, res) => {
