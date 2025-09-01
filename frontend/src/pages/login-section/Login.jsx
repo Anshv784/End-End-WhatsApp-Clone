@@ -91,6 +91,8 @@ const Login = () => {
         transition={{
           duration: 0.5,
         }}
+        drag
+        dragSnapToOrigin
         className={`${
           theme === "dark" ? "bg-gray-800 text-white" : "bg-white"
         } p-6 md:p-8 rounded-lg shadow-2xl w-full max-w-md relative z-10`}
@@ -121,7 +123,10 @@ const Login = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {step === 1 && (
-          <form className="space-y-4" onSubmit={handleLoginSubmit((data)=> console.log(data))}>
+          <form className="space-y-4" onSubmit={handleLoginSubmit((data)=>{
+            setLoading(true);
+            console.log(data);
+            })}>
             <p
               className={`text-center ${
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
