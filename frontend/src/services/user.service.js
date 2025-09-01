@@ -1,5 +1,5 @@
 // src/services/authService.js
-import axiosInstance from "../utils/axiosInstance";
+import {axiosInstance} from "./url.service";
 
 // Send OTP
 export const sendOtp = async (phoneNumber, phoneSuffix, email) => {

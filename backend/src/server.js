@@ -15,14 +15,20 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 const accessPoints = process.env.ACCESS_POINTS?.split(",") || [];
-
+const corsOptions = {
+  origin: accessPoints,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 // middlewares
+app.use(cors(corsOptions));
+// Matches all routes
+// app.options(/.*/, cors(corsOptions));
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-  origin: accessPoints,
-  credentials: true
-}));
+
 
 // create server
 const server = http.createServer(app);

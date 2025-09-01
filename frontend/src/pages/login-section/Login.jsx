@@ -4,6 +4,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Progressbar from "../../components/Progressbar";
 import { FaWhatsapp, FaChevronDown, FaUser } from "react-icons/fa";
 import Spinner from "../../components/Spinner";
+import {
+  sendOtp,
+  updateUserProfile,
+  verifyOtp,
+} from "../../services/user.service";
 
 import useLoginStore from "../../store/loginStore";
 import countries from "../../utils/countries";
@@ -18,6 +23,7 @@ import {
   otpValidationSchema,
   profileValidationSchema,
 } from "../../validations/loginSchema";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const { step, setStep, setUserPhoneData, userPhoneData, resetLoginState } =
@@ -35,7 +41,7 @@ const Login = () => {
   const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
   const [error, setError] = useState("");
-  const [loading ,setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -44,6 +50,128 @@ const Login = () => {
       country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       country.dialCode.includes(searchTerm)
   );
+
+  const onLoginSubmit = async (data) => {
+    try {
+
+      if ((!email && !phoneNumber) || (email && phoneNumber)) {
+      toast.error("Please enter either phone or email");
+      return;
+      }
+      console.log(data);
+      setLoading(true);
+      if (email) {
+        const response = await sendOtp(null, null, email);
+        if (response.status === "success") {
+          toast.info("OTP is send to your email");
+          setUserPhoneData({ email });
+          setStep(2);
+        } }
+      else {
+          response = await sendOtp(phoneNumber, selectedCountry.dialCode, null);
+          toast.info("OTP is send to your phone");
+          setUserPhoneData({
+            phoneNumber,
+            phoneSuffix: selectedCountry.dialCode,
+          });
+          setStep(2);
+        }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message || "Failed to send otp");
+      setError(error.message || "Failed to send otp");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onOtpSubmit = async () => {
+    try {
+      setLoading(true);
+      if (!userPhoneData) {
+        throw new Error("Phone or email data is missing");
+      }
+      const otpString = otp.join("");
+      let response;
+      if (userPhoneData?.email) {
+        response = await verifyOtp(null, null, otpString, email);
+      } else {
+        response = await verifyOtp(
+          userPhoneData.phoneNumber,
+          userPhoneData.phoneSuffix,
+          null,
+          otpString
+        );
+      }
+
+      if (response.status === "success") {
+        toast.success("OTP verified successfully");
+        const user = response.data?.user;
+        if (user?.username && user?.profilePicture) {
+          setUser(user);
+          toast.success("Welcome Back to WhatsApp");
+          navigate("/");
+          resetLoginState();
+        } else {
+          setStep(3);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error.message || "Failed to verify OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onhandleChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePictureFile(file);
+      setProfilePicture(URL.createObjectURL(file));
+    }
+  };
+
+  const onProfileSubmit = async (data) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("agreed", data.agreed);
+      if (profilePictureFile) {
+        formData.append("media", profilePictureFile);
+      } else {
+        formData.append("profilePicture", selectedAvatar);
+      }
+
+      await updateUserProfile(formData);
+      toast.success("Welcome Back to WhatsApp");
+      navigate("/");
+      resetLoginState();
+    } catch (error) {
+      console.log(error);
+      setError(error.message || "Failed to update user profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index, value) => {
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setOtpValue("otp", newOtp.join("")); // ✅ from RHF
+    if (value && index < 5) {
+      document.getElementById(`otp-${index + 1}`).focus();
+    }
+  };
+
+  const handleback = () => {
+    setStep(1);
+    setUserPhoneData(null);
+    setOtp(["", "", "", "", "", ""]);
+    setError(null);
+  };
 
   // Forms
   const {
@@ -123,10 +251,10 @@ const Login = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {step === 1 && (
-          <form className="space-y-4" onSubmit={handleLoginSubmit((data)=>{
-            setLoading(true);
-            console.log(data);
-            })}>
+          <form
+            className="space-y-4"
+            onSubmit={handleLoginSubmit(onLoginSubmit)}
+          >
             <p
               className={`text-center ${
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
@@ -265,9 +393,13 @@ const Login = () => {
             <button
               type="submit"
               className={`bg-green-500 text-white rounded-md w-full py-2 hover:bg-green-500 transition border`}
-            >{loading? <Spinner/> : "Send OTP"} </button>
+            >
+              {loading ? <Spinner /> : "Send OTP"}{" "}
+            </button>
           </form>
         )}
+
+        {step == 2 && <div>hello</div>}
       </motion.div>
     </div>
   );
