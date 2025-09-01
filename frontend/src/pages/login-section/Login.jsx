@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Progressbar from "../../components/Progressbar";
-import { FaWhatsapp ,FaChevronDown} from "react-icons/fa";
+import { FaWhatsapp, FaChevronDown, FaUser } from "react-icons/fa";
+import Spinner from "../../components/Spinner";
 
 import useLoginStore from "../../store/loginStore";
 import countries from "../../utils/countries";
@@ -34,14 +35,15 @@ const Login = () => {
   const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
   const [error, setError] = useState("");
+  const [loading ,setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const filterCountries = countries.filter((country) =>
-  country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  country.dialCode.includes(searchTerm)
+  const filterCountries = countries.filter(
+    (country) =>
+      country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.dialCode.includes(searchTerm)
   );
-
 
   // Forms
   const {
@@ -119,7 +121,7 @@ const Login = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {step === 1 && (
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleLoginSubmit((data)=> console.log(data))}>
             <p
               className={`text-center ${
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
@@ -192,14 +194,75 @@ const Login = () => {
                     </div>
                   )}
                 </div>
+                <input
+                  type="text"
+                  {...loginRegister("phoneNumber")}
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="PhoneNumber"
+                  className={`w-2/3 px-4 py-2 border ${
+                    theme === "dark"
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-white border-gray-500"
+                  }
+                rounded-md focus:outline-none focus:right-2 focus:ring-green-500 ${
+                  loginErrors.phoneNumber ? "border-red-500" : ""
+                }`}
+                />
               </div>
+              {loginErrors.phoneNumber && (
+                <p className="text-red-500 text-sm">
+                  {loginErrors.phoneNumber.message}
+                </p>
+              )}
             </div>
+
+            {/* divider */}
+
+            <div className="flex items-center my-4">
+              <div className="flex-grow h-px bg-gray-300"></div>
+              <span className="mx-3 text-gray-500 text-small font-medium">
+                or
+              </span>
+              <div className="flex-grow h-px bg-gray-300"></div>
+            </div>
+
+            {/* email */}
+            <div
+              className={`flex items-center px-3 py-2 border rounded-md  ${
+                theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-white border-gray-500"
+              }`}
+            >
+              <FaUser
+                className={`mr-2 text-gray-400 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}
+              />
+              <input
+                type="text"
+                {...loginRegister("email")}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email (optional)"
+                className={`w-full bg-transparent focus:outline-none ${
+                  theme === "dark" ? "text-white" : "text-black"
+                } ${loginErrors.email ? "border-red-500" : ""}`}
+              />
+            </div>
+            {loginErrors.email && (
+              <p className="text-red-500 text-sm">
+                {loginErrors.email.message}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className={`bg-green-500 text-white rounded-md w-full py-2 hover:bg-green-500 transition border`}
+            >{loading? <Spinner/> : "Send OTP"} </button>
           </form>
         )}
-
-        {/* -----------------next code here--------------- */}
-
-        
       </motion.div>
     </div>
   );
