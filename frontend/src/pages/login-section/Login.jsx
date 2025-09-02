@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Progressbar from "../../components/Progressbar";
-import { FaWhatsapp, FaChevronDown, FaUser } from "react-icons/fa";
+import { FaWhatsapp, FaChevronDown, FaUser, FaArrowLeft } from "react-icons/fa";
 import Spinner from "../../components/Spinner";
 import {
   sendOtp,
@@ -40,7 +40,7 @@ const Login = () => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]);
   const [profilePictureFile, setProfilePictureFile] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -53,10 +53,9 @@ const Login = () => {
 
   const onLoginSubmit = async (data) => {
     try {
-
       if ((!email && !phoneNumber) || (email && phoneNumber)) {
-      toast.error("Please enter either phone or email");
-      return;
+        toast.error("Please enter either phone or email");
+        return;
       }
       console.log(data);
       setLoading(true);
@@ -66,16 +65,19 @@ const Login = () => {
           toast.info("OTP is send to your email");
           setUserPhoneData({ email });
           setStep(2);
-        } }
-      else {
-          response = await sendOtp(phoneNumber, selectedCountry.dialCode, null);
-          toast.info("OTP is send to your phone");
-          setUserPhoneData({
-            phoneNumber,
-            phoneSuffix: selectedCountry.dialCode,
-          });
-          setStep(2);
         }
+      } else {
+        const response = await sendOtp(phoneNumber, selectedCountry.dialCode, null);
+        if(response.status === "success"){
+          toast.info("OTP is send to your phone");
+        setUserPhoneData({
+          phoneNumber,
+          phoneSuffix: selectedCountry.dialCode,
+        });
+        setStep(2);
+        }
+        
+      }
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to send otp");
@@ -94,7 +96,7 @@ const Login = () => {
       const otpString = otp.join("");
       let response;
       if (userPhoneData?.email) {
-        response = await verifyOtp(null, null, otpString, email);
+        response = await verifyOtp(null, null, email, otpString);
       } else {
         response = await verifyOtp(
           userPhoneData.phoneNumber,
@@ -160,7 +162,7 @@ const Login = () => {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    setOtpValue("otp", newOtp.join("")); // ✅ from RHF
+    setOtpValue("otp", newOtp.join(""));
     if (value && index < 5) {
       document.getElementById(`otp-${index + 1}`).focus();
     }
@@ -399,7 +401,63 @@ const Login = () => {
           </form>
         )}
 
-        {step == 2 && <div>hello</div>}
+        {step === 2 && (
+          <form className="space-y-4" onSubmit={handleOtpSubmit(onOtpSubmit)}>
+            <p>
+              Please Enter 6-digit OTP sent to your{" "}
+              {userPhoneData ? userPhoneData.phoneSuffix : "Email"}{" "}
+              {userPhoneData?.phoneNumber}
+            </p>
+
+            {/* OTP Input Fields */}
+            <div className="flex justify-between">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  className={`w-12 h-12 text-center border ${
+                    theme === "dark"
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-white border-gray-300"
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                    otpErrors.otp ? "border-red-500" : ""
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Error Message */}
+            {otpErrors.otp && (
+              <p className="text-red-500 text-sm">{otpErrors.otp.message}</p>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="bg-green-500 text-white rounded-md w-full py-2 hover:bg-green-600 transition"
+            >
+              {loading ? <Spinner /> : "Verify OTP"}
+            </button>
+
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={handleback}
+              className={`w-full mt-2 ${
+                theme === "dark"
+                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              } py-2 rounded-md flex items-center justify-center`}
+            >
+              <FaArrowLeft className="mr-2" />
+              Wrong Number? Go Back
+            </button>
+          </form>
+        )}
       </motion.div>
     </div>
   );

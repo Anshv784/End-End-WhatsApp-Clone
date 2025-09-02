@@ -14,9 +14,6 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.use(express.json());
-app.use(cookieParser());
-
 const accessPoints = process.env.ACCESS_POINT || [];
 
 const corsOptions = {
@@ -36,8 +33,8 @@ const corsOptions = {
 };
 // middlewares
 app.use(cors(corsOptions));
-
-
+app.use(express.json());
+app.use(cookieParser());
 
 
 // create server
