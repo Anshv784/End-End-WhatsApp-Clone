@@ -14,20 +14,30 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-const accessPoints = process.env.ACCESS_POINTS?.split(",") || [];
+app.use(express.json());
+app.use(cookieParser());
+
+const accessPoints = process.env.ACCESS_POINT || [];
+
 const corsOptions = {
-  origin: accessPoints,
+  origin:function (origin, callback) {
+    console.log("🔎 Incoming request origin:", origin);
+    
+    if (!origin || accessPoints.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 // middlewares
 app.use(cors(corsOptions));
-// Matches all routes
-// app.options(/.*/, cors(corsOptions));
 
-app.use(express.json());
-app.use(cookieParser());
+
 
 
 // create server
