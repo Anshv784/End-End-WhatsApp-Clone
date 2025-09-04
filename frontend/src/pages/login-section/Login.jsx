@@ -67,16 +67,19 @@ const Login = () => {
           setStep(2);
         }
       } else {
-        const response = await sendOtp(phoneNumber, selectedCountry.dialCode, null);
-        if(response.status === "success"){
-          toast.info("OTP is send to your phone");
-        setUserPhoneData({
+        const response = await sendOtp(
           phoneNumber,
-          phoneSuffix: selectedCountry.dialCode,
-        });
-        setStep(2);
+          selectedCountry.dialCode,
+          null
+        );
+        if (response.status === "success") {
+          toast.info("OTP is send to your phone");
+          setUserPhoneData({
+            phoneNumber,
+            phoneSuffix: selectedCountry.dialCode,
+          });
+          setStep(2);
         }
-        
       }
     } catch (error) {
       console.log(error);
@@ -96,6 +99,7 @@ const Login = () => {
       const otpString = otp.join("");
       let response;
       if (userPhoneData?.email) {
+        console.log(email);
         response = await verifyOtp(null, null, email, otpString);
       } else {
         response = await verifyOtp(
@@ -131,6 +135,12 @@ const Login = () => {
     if (file) {
       setProfilePictureFile(file);
       setProfilePicture(URL.createObjectURL(file));
+    }
+  };
+
+  const handleCursorMovement = (index, value, otp) => {
+    if (value && index < otp.length - 1) {
+      document.getElementById(`otp-${index + 1}`).focus();
     }
   };
 
@@ -221,8 +231,6 @@ const Login = () => {
         transition={{
           duration: 0.5,
         }}
-        drag
-        dragSnapToOrigin
         className={`${
           theme === "dark" ? "bg-gray-800 text-white" : "bg-white"
         } p-6 md:p-8 rounded-lg shadow-2xl w-full max-w-md relative z-10`}
@@ -379,7 +387,7 @@ const Login = () => {
                 type="text"
                 {...loginRegister("email")}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {setEmail(e.target.value)}}
                 placeholder="Email (optional)"
                 className={`w-full bg-transparent focus:outline-none ${
                   theme === "dark" ? "text-white" : "text-black"
@@ -405,7 +413,7 @@ const Login = () => {
           <form className="space-y-4" onSubmit={handleOtpSubmit(onOtpSubmit)}>
             <p>
               Please Enter 6-digit OTP sent to your{" "}
-              {userPhoneData ? userPhoneData.phoneSuffix : "Email"}{" "}
+              {userPhoneData?.phoneSuffix ? userPhoneData.phoneSuffix : "email"}{" "}
               {userPhoneData?.phoneNumber}
             </p>
 
@@ -418,7 +426,16 @@ const Login = () => {
                   type="text"
                   maxLength={1}
                   value={digit}
-                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, "");
+                    handleOtpChange(index, value);
+                    handleCursorMovement(index, value, otp);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && !otp[index] && index > 0) {
+                      document.getElementById(`otp-${index - 1}`).focus();
+                    }
+                  }}
                   className={`w-12 h-12 text-center border ${
                     theme === "dark"
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -442,6 +459,8 @@ const Login = () => {
             >
               {loading ? <Spinner /> : "Verify OTP"}
             </button>
+
+            
 
             {/* Back Button */}
             <button

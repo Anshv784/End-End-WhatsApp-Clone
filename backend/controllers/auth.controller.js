@@ -46,11 +46,13 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   const { phoneNumber, phoneSuffix, email, otp } = req.body;
+  console.log(req.body)
   let user;
 
   try {
     if (email) {
-      user = await User.findOne({ email });
+      user = await User.findOne({email});
+      console.log({email})
       if (!user) return response(res, 404, "User not found");
 
       const now = new Date();
@@ -62,13 +64,13 @@ export const verifyOtp = async (req, res) => {
       user.emailOtp = null;
       user.emailOtpExpiry = null;
       await user.save();
-    } else {
+    } 
+    else {
       if (!phoneNumber || !phoneSuffix) {
         return response(res, 400, "Phone number and phone suffix are required");
       }
-
       const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
-      user = await User.findOne({ phoneNumber });
+      user = await User.findOne({ phoneNumber});
       if (!user) return response(res, 404, "User not found");
 
       const result = await verifyPhoneOtp(fullPhoneNumber, otp);

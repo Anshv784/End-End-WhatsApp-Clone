@@ -18,8 +18,6 @@ const accessPoints = process.env.ACCESS_POINT || [];
 
 const corsOptions = {
   origin:function (origin, callback) {
-    console.log("🔎 Incoming request origin:", origin);
-    
     if (!origin || accessPoints.includes(origin)) {
       callback(null, true);
     } else {
