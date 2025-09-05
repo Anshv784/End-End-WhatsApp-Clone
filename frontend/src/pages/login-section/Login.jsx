@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Progressbar from "../../components/Progressbar";
-import { FaWhatsapp, FaChevronDown, FaUser, FaArrowLeft } from "react-icons/fa";
+import {
+  FaWhatsapp,
+  FaChevronDown,
+  FaUser,
+  FaArrowLeft,
+  FaPlus,
+} from "react-icons/fa";
 import Spinner from "../../components/Spinner";
 import {
   sendOtp,
@@ -130,7 +136,7 @@ const Login = () => {
     }
   };
 
-  const onhandleChange = (e) => {
+  const onHandleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfilePictureFile(file);
@@ -387,7 +393,9 @@ const Login = () => {
                 type="text"
                 {...loginRegister("email")}
                 value={email}
-                onChange={(e) => {setEmail(e.target.value)}}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                }}
                 placeholder="Email (optional)"
                 className={`w-full bg-transparent focus:outline-none ${
                   theme === "dark" ? "text-white" : "text-black"
@@ -460,8 +468,6 @@ const Login = () => {
               {loading ? <Spinner /> : "Verify OTP"}
             </button>
 
-            
-
             {/* Back Button */}
             <button
               type="button"
@@ -474,6 +480,124 @@ const Login = () => {
             >
               <FaArrowLeft className="mr-2" />
               Wrong Number? Go Back
+            </button>
+          </form>
+        )}
+
+        {step === 3 && (
+          <form
+            onSubmit={handleProfileSubmit(onProfileSubmit)}
+            className="space-y-4"
+          >
+            <div className="flex flex-col items-center mb-4">
+              <div className="relative w-24 h-24 mb-2">
+                <img
+                  src={profilePicture || selectedAvatar}
+                  alt="Profile picture"
+                  className="w-full h-full rounded-full object-cover"
+                />
+                <label
+                  htmlFor="profile-picture"
+                  className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition duration-300"
+                >
+                  <FaPlus className="h-4 w-4" />
+                </label>
+                <input
+                  type="file"
+                  id="profile-picture"
+                  accept="image/*"
+                  onChange={onHandleFileChange}
+                  className="hidden"
+                />
+              </div>
+              <p
+                className={`text-sm ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-500"
+                } mb-2`}
+              >
+                choose an avatar
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {avatars.map((avatar, index) => (
+                  <img
+                    key={index}
+                    src={avatar}
+                    alt={`Avatar ${index + 1}`}
+                    className={`w-12 h-12 rounded-full cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 ${
+                      selectedAvatar === avatar ? "ring-2 ring-green-500" : ""
+                    }`}
+                    onClick={() => setSelectedAvatar(avatar)}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <FaUser
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}
+              />
+
+              <input
+                {...profileRegister("username")}
+                type="text"
+                placeholder="Username"
+                className={`w-full pl-10 pr-3 py-2 border ${
+                  theme === "dark"
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-black"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-lg`}
+              />
+
+              {profileErrors.username && (
+                <p className="text-red-500 text-sm mt-1">
+                  {profileErrors.username.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                {...profileRegister("agreed")}
+                type="checkbox"
+                className={`rounded ${
+                  theme === "dark"
+                    ? "text-green-500 bg-gray-700 border-gray-600"
+                    : "text-green-500 border-gray-300"
+                } focus:ring-green-500`}
+                id="terms"
+              />
+
+              <label
+                htmlFor="terms"
+                className={`text-sm ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                I agree to the{" "}
+                <a href="#" className="text-red-500 hover:underline">
+                  Terms and Conditions
+                </a>
+              </label>
+            </div>
+
+            {profileErrors.agreed && (
+              <p className="text-red-500 text-sm mt-1">
+                {profileErrors.agreed.message}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={!watch("agreed") || loading}
+              className={`w-full bg-green-500 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center text-lg
+             ${
+               loading || !watch("agreed")
+                 ? "opacity-50 cursor-not-allowed"
+                 : ""
+             }`}
+            >
+              {loading ? <Spinner /> : "Create Profile"}
             </button>
           </form>
         )}

@@ -4,6 +4,7 @@ import { genOtp } from "../utils/genOtp.js";
 import { sendOtpToEmail } from "../services/emailService.js";
 import { sendOtpToPhoneNumber, verifyOtp as verifyPhoneOtp } from "../services/twillioService.js";
 import { generateToken } from "../utils/generateToken.js";
+import { uploadFileToCloudinary } from "../lib/cloudinaryConfig.js";
 
 export const sendOtp = async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
