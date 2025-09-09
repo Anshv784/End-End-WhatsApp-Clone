@@ -13,5 +13,5 @@ authRouter.get('/log-out',logOut);
 
 //protected routes
 authRouter.put('/update-profile',authMiddleware,multerMiddleware,updateProfile);
-// authRouter.get('/',authMiddleware,checkAuthenticated,profile);
+authRouter.get('/check-auth',authMiddleware,checkAuthenticated);
 authRouter.get('/users',authMiddleware,getAllUsers);

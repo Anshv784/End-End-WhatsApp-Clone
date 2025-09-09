@@ -5,6 +5,7 @@ import { ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { ProtectedRoute, PublicRoute } from './Protected';
 import { Homepage } from './components/Homepage';
+import UserDetails from './components/UserDetails';
 
 function App() {
   return (
@@ -17,6 +18,9 @@ function App() {
         </Route> 
         <Route element={<ProtectedRoute/>}>
           <Route path='/' element={<Homepage/>}/>
+          <Route path='/user-profile' element={<UserDetails/>}/>
+          {/* <Route path='/status' element={<Status/>}/>
+          <Route path='/setting' element={<Setting/>}/> */}
         </Route>
       </Routes>
     </Router>

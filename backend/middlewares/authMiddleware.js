@@ -25,10 +25,10 @@ export const checkAuthenticated = async(req,res)=>{
     try {
         const userId = req.user.userId;
         if(!userId) return response(res,404,"Unauthorization ! please login before access our app");
-        const user = await User.findById(userid);
+        const user = await User.findById(userId);
         if(!user) return response(res,404,"User Not found");
 
-        return (res,400,"user retrived and allowed to use whatsapp", user);
+        return response(res,400,"user retrived and allowed to use whatsapp", user);
 
 
     } catch (error) {
