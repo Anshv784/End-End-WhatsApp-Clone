@@ -52,6 +52,17 @@ export const createStatus = async (req, res) => {
       .populate("user", "username profilePicture")
       .populate("viewers", "username profilePicture");
       
+
+      //emit socket event
+
+      if(req.io && req.socketUserMap){
+        for(const [connectedUserId,socketId] of req.socketUserMap){
+          if(connectedUserId != userId){
+            req.io.to(socketId).emit("new_status",populatedStatus);
+          }
+        }
+      }
+
     return response(res, 201, "Status created Successfully", populatedStatus);
   } catch (error) {
     console.error(error);
@@ -98,6 +109,23 @@ export const viewStatus = async (req, res) => {
       .populate("user", "username profilePicture")
       .populate("viewers", "username profilePicture");
 
+      //emit socket event
+      if(req.io && req.socketUserMap){
+        const statusOwnerSocketId = req.socketUserMap.get(status.user._id.toString());
+        if(statusOwnerSocketId){
+          const viewData = {
+            statusId,
+            viewerId : userId,
+            totalViewers : updateStatus.viewers.length,
+            viewers : updateStatus.viewers
+          }
+
+          res.io.to(statusOwnerSocketId).emit("status_viewed",viewData);
+        }else{
+          console.log("Status owner is not connected");
+        }
+      }
+
     return response(res, 200, "Status viewed successfully", updateStatus);
   } catch (error) {
     console.error(error);
@@ -121,7 +149,17 @@ export const deleteStatus = async (req, res) => {
       return response(res, 403, "Not authorized to delete this status");
     }
 
+
     await status.deleteOne();
+
+    if(req.io && req.socketUserMap){
+        for(const [connectedUserId,socketId] of req.socketUserMap){
+          if(connectedUserId != userId){
+            req.io.to(socketId).emit("status_deleted",statusId);
+          }
+        }
+    }
+
     return response(res, 200, "status deleted successfully");
   } catch (error) {
     console.error(error);

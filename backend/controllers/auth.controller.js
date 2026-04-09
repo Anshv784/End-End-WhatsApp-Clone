@@ -8,8 +8,6 @@ import { uploadFileToCloudinary } from "../lib/cloudinaryConfig.js";
 
 export const sendOtp = async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
-  const otp = genOtp();
-  const expiry = new Date(Date.now() + 5 * 60 * 1000);
   let user;
 
   try {
@@ -17,6 +15,9 @@ export const sendOtp = async (req, res) => {
     if (email) {
       user = await User.findOne({ email });
       if (!user) user = new User({ email });
+
+      const otp = genOtp();
+      const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
       user.emailOtp = otp;
       user.emailOtpExpiry = expiry;

@@ -70,6 +70,16 @@ export const sendMessage = async (req, res) => {
       .populate("sender", "username profilePicture")
       .populate("receiver", "username profilePicture");
 
+      //emit socket event for realtime
+      if(req.io && req.socketUserMap){
+        const receiverSocketId = req.socketUserMap.get(receiverId);
+        if(receiverId){
+          req.io.to(receiverSocketId).emit("recieve_message" , populatedMessage);
+          message.messageStatus = "delivered";
+          await message.save();
+        }
+      }
+
     return response(res, 201, "Message send successfully", populatedMessage);
 
   } catch (error) {
@@ -152,6 +162,21 @@ export const markAsRead = async (req, res) => {
       { $set: { messageStatus: "read" } }
     );
 
+    //notify to original sender
+      if(req.io && req.socketUserMap){
+        for(const message of messages){
+          const senderSocketId = req.socketUserMap.get(message.sender.toString());
+          if(senderSocketId){
+            const updatedMessage = {
+              id : message._id,
+              messageStatus : "read",
+            };
+
+            req.io.to(senderSocketId).emit("message_read",updatedMessage);
+            await message.save();
+          }
+        }
+      }
     return response(res, 200, "Messages marked as read", messages);
   } catch (error) {
     console.error(error);
@@ -173,6 +198,13 @@ export const deleteMessage = async (req, res) => {
     }
 
     await message.deleteOne();
+
+    if(req.io && req.socketUserMap){
+        const recieverSocketId = req.socketUserMap.get(message.receiver.toString());
+        if(recieverSocketId){
+          req.io.to(recieverSocketId).emit("message_deleted",messageId);
+        }
+    }
 
     return response(res, 200, "Message deleted successfully");
   } catch (error) {
