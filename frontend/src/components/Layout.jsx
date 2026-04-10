@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import useLayoutStore from "../store/layoutStore";
 import useThemeStore from "../store/themeStore";
 import Sidebar from "./Sidebar";
+import ChatWindow from "../pages/chat-section/ChatWindow";
 
 const Layout = ({
   children,
@@ -17,7 +18,7 @@ const Layout = ({
   const setSelectedContact = useLayoutStore(
     (state) => state.setSelectedContact
   );
-  const location = useLocation();
+  const location = useLocation(); // for side or full
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { theme, setTheme } = useThemeStore();
 
@@ -67,11 +68,62 @@ const Layout = ({
               transition={{ type: "tween" }}
               className="w-full"
             >
-              {children}
+              <ChatWindow
+                selectedContact = {selectedContact}
+                setSelectedContact = {setSelectedContact}
+                isMobile = {isMobile}
+              />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {isMobile && <Sidebar/>}
+
+      {isThemeDialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className={`${theme === "dark" ? "bg-[#202c33] text-white" : "bg-white text-black"} p-6 rounded-lg shadow-lg max-w-sm w-full`}>
+            <h2 className="text-2xl font-semibold mb-4">
+              Choose a theme
+            </h2>
+            <div className="space-y-4">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input 
+                  type="radio" 
+                  value="light"
+                  checked={theme === "light"}
+                  onChange={() => setTheme("light")}
+                  className="from-radio text-blue-600"
+                />
+                <span>Light</span>
+              </label>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input 
+                  type="radio" 
+                  value="dark"
+                  checked={theme === "dark"}
+                  onChange={() => setTheme("light")}
+                  className="from-radio text-blue-600"
+                />
+                <span>Dark</span>
+              </label>
+            </div>
+            <button
+              onclick = {toggleThemeDialog}
+              className="mt-6 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      // status status
+      {isStatusPreviewOpen && (
+        <div className="fixed inset-0 items-center justify-center bg-black bg-opacity-50 z-50">
+          {statusPreviewContent}
+        </div>
+      )}
     </div>
   );
 };
