@@ -14,7 +14,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-const accessPoints = process.env.ACCESS_POINT || [];
+const accessPoints = process.env.ACCESS_POINT || "http://localhost:3000";
 
 const corsOptions = {
   origin:function (origin, callback) {

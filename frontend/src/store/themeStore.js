@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist , createJSONStorage } from "zustand/middleware";
 
 const useThemeStore = create(
   persist(
@@ -9,7 +9,7 @@ const useThemeStore = create(
     }),
     {
       name: "theme-storage",
-      getStorage: () => localStorage,
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist , createJSONStorage } from "zustand/middleware";
 
 const useLayoutStore = create(
   persist(
@@ -16,7 +16,7 @@ const useLayoutStore = create(
     }),
     {
       name: "layout-storage",
-      getStorage: () => localStorage,
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );
