@@ -5,6 +5,7 @@ import { sendOtpToEmail } from "../services/emailService.js";
 import { sendOtpToPhoneNumber, verifyOtp as verifyPhoneOtp } from "../services/twillioService.js";
 import { generateToken } from "../utils/generateToken.js";
 import { uploadFileToCloudinary } from "../lib/cloudinaryConfig.js";
+import Conversation from "../models/conversation.model.js";
 
 export const sendOtp = async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -155,7 +156,7 @@ export const getAllUsers = async (req, res) => {
       })
     );
 
-    return response(res, 200, "users retived successfully", usersWithConversation);
+    return response(res, 200, "users retrieved successfully", usersWithConversation);
   } catch (error) {
     console.error(error);
     return response(res, 500, "Internal server error");
