@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css'
 import { ProtectedRoute, PublicRoute } from './Protected';
 import { Homepage } from './components/Homepage';
 import UserDetails from './components/UserDetails';
+import Status from './pages/status-section/Status';
+import Setting  from './pages/setting-section/Setting';
 
 function App() {
   return (
@@ -19,8 +21,8 @@ function App() {
         <Route element={<ProtectedRoute/>}>
           <Route path='/' element={<Homepage/>}/>
           <Route path='/user-profile' element={<UserDetails/>}/>
-          {/* <Route path='/status' element={<Status/>}/>
-          <Route path='/setting' element={<Setting/>}/> */}
+          <Route path='/status' element={<Status/>}/>
+          <Route path='/setting' element={<Setting/>}/>
         </Route>
       </Routes>
     </Router>
