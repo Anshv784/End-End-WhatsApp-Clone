@@ -17,7 +17,7 @@ import {
 } from "../../services/user.service";
 
 import useLoginStore from "../../store/loginStore";
-import countries from "../../utils/countries";
+import countries from "../../utils/Countries.js"
 import { avatars } from "../../utils/avatars";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/userStore";
