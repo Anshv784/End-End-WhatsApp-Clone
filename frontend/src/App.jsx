@@ -8,8 +8,23 @@ import { Homepage } from './components/Homepage';
 import UserDetails from './components/UserDetails';
 import Status from './pages/status-section/Status';
 import Setting  from './pages/setting-section/Setting';
+import useUserStore from './store/userStore';
+import { useEffect } from 'react';
+import initializeSocket from '../../backend/services/socketService';
+import { disconnectSocket } from './services/chat.service';
 
 function App() {
+  const {user} = useUserStore();
+
+  useEffect(() => {
+    if(user){
+      const socket = initializeSocket();
+    }
+
+    return () => {
+      disconnectSocket();
+    }
+  },[user])
   return (
     <>
     <ToastContainer position='top-right' autoClose={3000}/>
