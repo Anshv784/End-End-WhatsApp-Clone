@@ -275,94 +275,38 @@ const Login = () => {
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
               } mb-4`}
             >
-              Enter your phone number to receive an OTP
+              Enter your email to receive an OTP
             </p>
 
-            <div className="relative">
+            <div className="relative opacity-60">
               <div className="flex">
                 <div className="relative w-1/3">
                   <button
                     type="button"
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className={`flex-shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-center ${
+                    disabled
+                    className={`flex-shrink-0 z-10 w-full inline-flex items-center py-2.5 px-4 text-sm font-medium text-center ${
                       theme === "dark"
-                        ? "text-white bg-gray-700 border-gray-600"
-                        : "text-gray-900 bg-gray-100 border-gray-300"
-                    } border rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100`}
+                        ? "text-gray-500 bg-gray-800 border-gray-700"
+                        : "text-gray-400 bg-gray-100 border-gray-300"
+                    } border rounded-s-lg cursor-not-allowed`}
                   >
                     <span>
                       {selectedCountry.flag} {selectedCountry.dialCode}
                     </span>
                     <FaChevronDown className="ml-2" />
                   </button>
-
-                  {showDropdown && (
-                    <div
-                      className={`absolute z-10 w-full mt-1 ${
-                        theme === "dark"
-                          ? "bg-gray-700 border-gray-600"
-                          : "bg-white border-gray-300"
-                      } border rounded-md shadow-lg max-h-60 overflow-auto`}
-                    >
-                      <div
-                        className={`sticky top-0 ${
-                          theme === "dark" ? "bg-gray-700" : "bg-white"
-                        } p-2`}
-                      >
-                        <input
-                          type="text"
-                          placeholder="Search countries..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className={`w-full px-2 py-1 border ${
-                            theme === "dark"
-                              ? "bg-gray-600 border-gray-500 text-white"
-                              : "bg-white border-gray-300"
-                          } rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
-                        />
-                      </div>
-
-                      {filterCountries.map((country) => (
-                        <button
-                          key={country.alpha2}
-                          type="button"
-                          className={`w-full text-left px-3 py-2 ${
-                            theme === "dark"
-                              ? "hover:bg-gray-600"
-                              : "hover:bg-gray-100"
-                          }`}
-                          onClick={() => {
-                            setSelectedCountry(country);
-                            setShowDropdown(false);
-                          }}
-                        >
-                          {country.flag} {country.dialCode} {country.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <input
                   type="text"
-                  {...loginRegister("phoneNumber")}
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="PhoneNumber"
+                  disabled
+                  placeholder="Phone login temporarily disabled"
                   className={`w-2/3 px-4 py-2 border ${
                     theme === "dark"
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-500"
-                  }
-                rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
-                  loginErrors.phoneNumber ? "border-red-500" : ""
-                }`}
+                      ? "bg-gray-800 border-gray-700 text-gray-500"
+                      : "bg-gray-100 border-gray-300 text-gray-400"
+                  } rounded-md cursor-not-allowed focus:outline-none`}
                 />
               </div>
-              {loginErrors.phoneNumber && (
-                <p className="text-red-500 text-sm">
-                  {loginErrors.phoneNumber.message}
-                </p>
-              )}
             </div>
 
             {/* divider */}
@@ -395,11 +339,14 @@ const Login = () => {
                 onChange={(e) => {
                   setEmail(e.target.value);
                 }}
-                placeholder="Email (optional)"
+                placeholder="Email Address"
                 className={`w-full bg-transparent focus:outline-none ${
                   theme === "dark" ? "text-white" : "text-black"
                 } ${loginErrors.email ? "border-red-500" : ""}`}
               />
+              <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded font-semibold whitespace-nowrap">
+                Recommended
+              </span>
             </div>
             {loginErrors.email && (
               <p className="text-red-500 text-sm">

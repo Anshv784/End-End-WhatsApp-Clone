@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import { dbConnect } from "../lib/dbConnect.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -40,6 +41,22 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
+
+// Database connection check middleware
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await dbConnect();
+    } catch (error) {
+      return res.status(500).json({
+        status: "error",
+        message: "Database connection failed. Please verify your MONGO_URI in Vercel settings and ensure MongoDB Atlas allows access from all IP addresses (0.0.0.0/0).",
+        error: error.message,
+      });
+    }
+  }
+  next();
+});
 
 
 // create server
