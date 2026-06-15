@@ -27,7 +27,11 @@ if (process.env.ACCESS_POINT) {
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      (process.env.VERCEL && (origin.includes(".vercel.app") || origin.includes("localhost")))
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
