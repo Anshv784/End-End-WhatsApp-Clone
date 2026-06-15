@@ -371,9 +371,12 @@ const Login = () => {
               {userPhoneData?.phoneNumber}
             </p>
             {userPhoneData?.email && (
-              <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium flex items-center gap-1.5">
-                💡 Don't see it? Please check your <strong>Spam</strong> or <strong>Junk</strong> folder.
-              </p>
+              <div className="text-xs md:text-sm text-yellow-600 dark:text-yellow-400 font-medium flex items-start gap-1.5">
+                <span className="flex-shrink-0">💡</span>
+                <span>
+                  Don't see it? Please check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+                </span>
+              </div>
             )}
 
             {/* OTP Input Fields */}

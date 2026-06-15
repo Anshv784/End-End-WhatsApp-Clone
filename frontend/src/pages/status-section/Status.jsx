@@ -763,7 +763,7 @@ const Status = () => {
         {/* --- Immersive Stories Viewer (Full Screen Overlay) --- */}
         <AnimatePresence>
           {activeViewerGroup && (
-            <div className="fixed inset-0 z-[100] bg-black flex flex-col justify-between select-none relative">
+            <div className="fixed inset-0 z-[150] bg-black flex flex-col justify-between select-none">
 
               {/* Progress Indicators */}
               <div className="absolute top-4 left-4 right-4 z-10 flex space-x-1">
