@@ -6,7 +6,7 @@ let socket = null;
 const initializeSocket = () => {
     if (socket) return socket;
 
-    const BACKEND_URL = import.meta.env.VITE_API_URL;
+    const BACKEND_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
     socket = io(BACKEND_URL, {
         withCredentials: true,

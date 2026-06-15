@@ -64,11 +64,17 @@ app.use("/api/status",statusRouter);
     await dbConnect();
     console.log("Database connected");
 
-    server.listen(port, () => {
-      console.log(`Listening on port: ${port}`);
-    });
+    if (!process.env.VERCEL) {
+      server.listen(port, () => {
+        console.log(`Listening on port: ${port}`);
+      });
+    }
   } catch (error) {
     console.error("Failed to connect to database:", error.message);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
   }
 })();
+
+export default app;

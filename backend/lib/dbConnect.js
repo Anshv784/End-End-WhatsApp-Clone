@@ -3,6 +3,9 @@ import dotenv from "dotenv"
 dotenv.config()
 
 export const dbConnect = async()=>{
+    if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
+        return;
+    }
     try {
         const url = process.env.MONGO_URI;
         
@@ -12,6 +15,10 @@ export const dbConnect = async()=>{
         await mongoose.connect(url)
     } catch (error) {
         console.error("Problem while connecting to database " + error.message)
-        process.exit(1);
+        if (!process.env.VERCEL) {
+            process.exit(1);
+        } else {
+            throw error;
+        }
     }
 }
