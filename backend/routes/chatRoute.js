@@ -1,6 +1,6 @@
 import express from "express"
 import { sendMessage,getConversation,getMessages,deleteMessage,markAsRead} from "../controllers/chat.controller.js"
-import { authMiddleware } from "../middlewares/authmiddleware.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { multerMiddleware } from "../middlewares/multerMiddleware.js";
 
 export const chatRouter = express.Router();

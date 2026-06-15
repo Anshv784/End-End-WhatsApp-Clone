@@ -1,6 +1,6 @@
 import express from "express"
 import { createStatus ,getStatus,viewStatus,deleteStatus} from "../controllers/status.controller.js";
-import { authMiddleware } from "../middlewares/authmiddleware.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { multerMiddleware } from "../middlewares/multerMiddleware.js";
 
 export const statusRouter = express.Router();

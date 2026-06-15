@@ -1,6 +1,6 @@
 import express from "express"
 import { getAllUsers, sendOtp,verifyOtp } from "../controllers/auth.controller.js"
-import { authMiddleware, checkAuthenticated, logOut} from "../middlewares/authmiddleware.js";
+import { authMiddleware, checkAuthenticated, logOut} from "../middlewares/authMiddleware.js";
 import { multerMiddleware } from "../middlewares/multerMiddleware.js";
 import { updateProfile } from "../controllers/auth.controller.js";
 
