@@ -25,24 +25,49 @@ if (process.env.ACCESS_POINT) {
   }
 }
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (
-      !origin ||
-      allowedOrigins.includes(origin) ||
-      (process.env.VERCEL && (origin.includes(".vercel.app") || origin.includes("localhost")))
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+const corsOptionsDelegate = (req, callback) => {
+  const origin = req.header("Origin");
+  let isAllowed = false;
+
+  if (!origin) {
+    isAllowed = true;
+  } else {
+    let originHost = "";
+    try {
+      originHost = new URL(origin).host;
+    } catch (e) {
+      // Invalid URL
     }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+
+    const requestHost = req.headers.host;
+
+    // 1. Check if origin is explicitly allowed
+    const isAllowedOrigin = allowedOrigins.includes(origin);
+    
+    // 2. Check if same-origin (origin matches current backend host)
+    const isSameOrigin = originHost && requestHost && originHost === requestHost;
+    
+    // 3. Check if origin is localhost (local development on any port)
+    const isLocal = originHost && (originHost === "localhost" || originHost.startsWith("localhost:"));
+
+    if (isAllowedOrigin || isSameOrigin || isLocal) {
+      isAllowed = true;
+    }
+  }
+
+  if (isAllowed) {
+    callback(null, {
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    });
+  } else {
+    callback(new Error("Not allowed by CORS"));
+  }
 };
 // middlewares
-app.use(cors(corsOptions));
+app.use(cors(corsOptionsDelegate));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 

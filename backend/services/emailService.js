@@ -28,7 +28,8 @@ export const sendOtpToEmail = async (email, otp) => {
     <p>If you didn't request this OTP, please ignore this email.</p>
     <p style="margin-top: 20px;">Thanks & Regards,<br>WhatsApp Web Security Team</p>
     <hr style="margin: 30px 0;" />
-    <small style="color: #777;">This is an automated message. Please do not reply.</small>
+    <small style="color: #777; display: block; margin-bottom: 5px;">This is an automated message. Please do not reply.</small>
+    <small style="color: #999; display: block;">💡 If this email landed in your Spam folder, please mark it as <strong>"Not Spam"</strong> to receive future verification codes directly in your inbox.</small>
   </div>
   `;
 

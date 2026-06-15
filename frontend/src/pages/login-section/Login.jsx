@@ -365,11 +365,16 @@ const Login = () => {
 
         {step === 2 && (
           <form className="space-y-4" onSubmit={handleOtpSubmit(onOtpSubmit)}>
-            <p>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-700"}>
               Please Enter 6-digit OTP sent to your{" "}
               {userPhoneData?.phoneSuffix ? userPhoneData.phoneSuffix : "email"}{" "}
               {userPhoneData?.phoneNumber}
             </p>
+            {userPhoneData?.email && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium flex items-center gap-1.5">
+                💡 Don't see it? Please check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+              </p>
+            )}
 
             {/* OTP Input Fields */}
             <div className="flex justify-between">
