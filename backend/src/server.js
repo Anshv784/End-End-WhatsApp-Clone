@@ -14,14 +14,21 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-const accessPoints = process.env.ACCESS_POINT || "http://localhost:3000";
+let allowedOrigins = ["http://localhost:3000"];
+if (process.env.ACCESS_POINT) {
+  try {
+    const parsed = JSON.parse(process.env.ACCESS_POINT);
+    allowedOrigins = Array.isArray(parsed) ? parsed : [parsed];
+  } catch (e) {
+    allowedOrigins = process.env.ACCESS_POINT.split(",").map(o => o.trim());
+  }
+}
 
 const corsOptions = {
-  origin:function (origin, callback) {
-    if (!origin || accessPoints.includes(origin)) {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log("Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -31,7 +38,7 @@ const corsOptions = {
 };
 // middlewares
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
 

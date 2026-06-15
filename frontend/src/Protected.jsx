@@ -14,7 +14,6 @@ export const ProtectedRoute = () => {
         const verifyAuth = async () => {
             try {
                 const result = await checkUserAuth();
-                console.log(result);
                 if (result?.isAuthenticated) {
                     setUser(result.user);
                 } else {

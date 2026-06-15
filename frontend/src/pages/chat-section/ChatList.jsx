@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import useLayoutStore from "../../store/layoutStore";
 import useThemeStore from "../../store/themeStore";
 import useUserStore from "../../store/userStore";
+import useChatStore from "../../store/chatStore";
 import { FaSearch, FaPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
+import formatTimestamp from "../../utils/FormatTimestamp";
 
 const ChatList = ({ contacts }) => {
   const setSelectedContact = useLayoutStore(
@@ -15,6 +17,7 @@ const ChatList = ({ contacts }) => {
 
   const { theme } = useThemeStore();
   const { user } = useUserStore();
+  const typingUsers = useChatStore((state) => state.typingUsers);
 
   const [searchTerms, setSearchTerms] = useState("");
 
@@ -26,7 +29,7 @@ const ChatList = ({ contacts }) => {
 
   return (
     <div
-      className={`w-full border-r h-screen ${
+      className={`w-full border-r h-full flex flex-col ${
         theme === "dark"
           ? "bg-[rgb(17,27,33)] border-gray-600"
           : "bg-white border-gray-200"
@@ -69,7 +72,7 @@ const ChatList = ({ contacts }) => {
       </div>
 
       {/* Chat List */}
-      <div className="overflow-y-auto h-[calc(100vh-120px)]">
+      <div className="overflow-y-auto flex-1">
         {filteredContacts?.map((contact) => (
           <motion.div
             key={contact?._id}
@@ -118,15 +121,19 @@ const ChatList = ({ contacts }) => {
 
               {/* Bottom row */}
               <div className="flex justify-between items-baseline">
-                <p
-                  className={`text-sm ${
-                    theme === "dark"
-                      ? "text-gray-400"
-                      : "text-gray-500"
-                  } truncate`}
-                >
-                  {contact?.conversation?.lastMessage?.content}
-                </p>
+                {contact.conversation?._id && typingUsers.get(contact.conversation._id)?.has(contact._id) ? (
+                  <span className="text-green-500 italic font-medium text-sm">typing...</span>
+                ) : (
+                  <p
+                    className={`text-sm ${
+                      theme === "dark"
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    } truncate`}
+                  >
+                    {contact?.conversation?.lastMessage?.content}
+                  </p>
+                )}
 
                 {contact?.conversation &&
                   contact?.conversation?.unreadCount > 0 &&

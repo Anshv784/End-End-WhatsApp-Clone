@@ -12,7 +12,7 @@ const useUserStore = create(
         set({ user: null, isAuthenticated: false }),
     }),
     {
-      name: "login-storage",
+      name: "user-storage",
       storage: createJSONStorage(() => localStorage),
     }
   )

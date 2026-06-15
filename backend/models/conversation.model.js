@@ -7,6 +7,7 @@ const conversationSchema = new mongoose.Schema(
     ],
     lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
     unreadCount: { type: Number, default: 0 },
+    unreadCounts: { type: Map, of: Number, default: {} },
   },
   { timestamps: true }
 );

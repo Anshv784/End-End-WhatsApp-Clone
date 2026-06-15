@@ -12,7 +12,6 @@ export const authMiddleware = (req,res,next)=>{
     try {
         const decoded = jwt.verify(token,process.env.JWT_SECRET);
         req.user = decoded;
-        console.log(req.user);
         next();
     } catch (error) {
         console.error(error)
@@ -43,6 +42,6 @@ export const logOut = (req,res)=>{
         return response(res,200,"user logout successfully")
     } catch (error) {
         console.error(error)
-        return response(res,500,"Internal. Server Error")
+        return response(res,500,"Internal server error")
     }
 }

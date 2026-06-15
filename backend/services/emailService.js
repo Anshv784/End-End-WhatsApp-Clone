@@ -39,7 +39,6 @@ export const sendOtpToEmail = async (email, otp) => {
       subject: "Your Whatsapp Verification Code",
       html,
     });
-    console.log("OTP email sent successfully");
   } catch (err) {
     console.error("Error sending OTP email:", err);
   }

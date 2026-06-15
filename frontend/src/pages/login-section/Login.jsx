@@ -64,7 +64,6 @@ const Login = () => {
         toast.error("Please enter either phone or email");
         return;
       }
-      console.log(data);
       setLoading(true);
       if (email) {
         const response = await sendOtp(null, null, email);
@@ -89,7 +88,7 @@ const Login = () => {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error.message || "Failed to send otp");
       setError(error.message || "Failed to send otp");
     } finally {
@@ -106,8 +105,7 @@ const Login = () => {
       const otpString = otp.join("");
       let response;
       if (userPhoneData?.email) {
-        console.log(email);
-        response = await verifyOtp(null, null, email, otpString);
+        response = await verifyOtp(null, null, userPhoneData.email, otpString);
       } else {
         response = await verifyOtp(
           userPhoneData.phoneNumber,
@@ -130,7 +128,7 @@ const Login = () => {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setError(error.message || "Failed to verify OTP");
     } finally {
       setLoading(false);
@@ -168,7 +166,7 @@ const Login = () => {
       navigate("/");
       resetLoginState();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setError(error.message || "Failed to update user profile");
     } finally {
       setLoading(false);
@@ -290,7 +288,7 @@ const Login = () => {
                       theme === "dark"
                         ? "text-white bg-gray-700 border-gray-600"
                         : "text-gray-900 bg-gray-100 border-gray-300"
-                    } border rounded-s-lg hover:bg-gray-200 focus:right-4 focus:outline-none focus:ring-gray-100`}
+                    } border rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100`}
                   >
                     <span>
                       {selectedCountry.flag} {selectedCountry.dialCode}
@@ -320,7 +318,7 @@ const Login = () => {
                             theme === "dark"
                               ? "bg-gray-600 border-gray-500 text-white"
                               : "bg-white border-gray-300"
-                          } rounded-md text-sm focus:outline-none focus:right-2 focus:ring-green-500`}
+                          } rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
                         />
                       </div>
 
@@ -355,7 +353,7 @@ const Login = () => {
                       ? "bg-gray-700 border-gray-600 text-white"
                       : "bg-white border-gray-500"
                   }
-                rounded-md focus:outline-none focus:right-2 focus:ring-green-500 ${
+                rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${
                   loginErrors.phoneNumber ? "border-red-500" : ""
                 }`}
                 />
@@ -527,7 +525,11 @@ const Login = () => {
                     className={`w-12 h-12 rounded-full cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 ${
                       selectedAvatar === avatar ? "ring-2 ring-green-500" : ""
                     }`}
-                    onClick={() => setSelectedAvatar(avatar)}
+                    onClick={() => {
+                      setSelectedAvatar(avatar);
+                      setProfilePicture("");
+                      setProfilePictureFile(null);
+                    }}
                   />
                 ))}
               </div>

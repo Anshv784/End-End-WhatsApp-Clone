@@ -6,14 +6,14 @@ import useLayoutStore from "../store/layoutStore";
 import { FaCog, FaUserCircle, FaWhatsapp } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {MdRadioButtonChecked} from "react-icons/md"
+import { MdRadioButtonChecked } from "react-icons/md"
 
 const Sidebar = () => {
   const location = useLocation(); // for side or full
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const { theme, setTheme } = useThemeStore();
   const { user } = useUserStore();
-  const { activeTab, setActiveTab, selectedContact } = useLayoutStore();
+  const { activeTab, setActiveTab } = useLayoutStore();
 
   useEffect(() => {
     if (location.pathname === "/") {
@@ -26,10 +26,6 @@ const Sidebar = () => {
       setActiveTab("setting");
     }
   }, [location, setActiveTab]);
-
-  if (isMobile && selectedContact) {
-    return null;
-  }
 
   const SidebarContent = (
     <>
@@ -44,14 +40,13 @@ const Sidebar = () => {
         <FaWhatsapp
           className={`
             h-6 w-6 
-            ${
-              activeTab === "chats"
-                ? theme === "dark"
-                  ? "text-gray-800"
-                  : ""
-                : theme === "dark"
-                  ? "text-gray-300"
-                  : "text-gray-800"
+            ${activeTab === "chats"
+              ? theme === "dark"
+                ? "text-gray-800"
+                : ""
+              : theme === "dark"
+                ? "text-gray-300"
+                : "text-gray-800"
             }`}
         />
       </Link>
@@ -66,18 +61,17 @@ const Sidebar = () => {
         <MdRadioButtonChecked
           className={`
             h-6 w-6 
-            ${
-              activeTab === "status"
-                ? theme === "dark"
-                  ? "text-gray-800"
-                  : ""
-                : theme === "dark"
-                  ? "text-gray-300"
-                  : "text-gray-800"
+            ${activeTab === "status"
+              ? theme === "dark"
+                ? "text-gray-800"
+                : ""
+              : theme === "dark"
+                ? "text-gray-300"
+                : "text-gray-800"
             }`}
         />
       </Link>
-      {!isMobile && <div className="flex-grow"/>}
+      {!isMobile && <div className="flex-grow" />}
       <Link
         to="/user-profile"
         className={`
@@ -86,27 +80,26 @@ const Sidebar = () => {
           focus:outline-none
           `}
       >
-      {user?.profilePicture ? (
-        <img src={user.profilePicture} 
-          alt="user"
-          className="h-6 w-6 rounded-full"
-        />
-      ) :
-      (
-        <FaUserCircle
-          className={`
+        {user?.profilePicture ? (
+          <img src={user.profilePicture}
+            alt="user"
+            className="h-6 w-6 rounded-full"
+          />
+        ) :
+          (
+            <FaUserCircle
+              className={`
             h-6 w-6 
-            ${
-              activeTab === "profile"
-                ? theme === "dark"
-                  ? "text-gray-800"
-                  : ""
-                : theme === "dark"
-                  ? "text-gray-300"
-                  : "text-gray-800"
-            }`}
-        />
-      )}
+            ${activeTab === "profile"
+                  ? theme === "dark"
+                    ? "text-gray-800"
+                    : ""
+                  : theme === "dark"
+                    ? "text-gray-300"
+                    : "text-gray-800"
+                }`}
+            />
+          )}
       </Link>
       <Link
         to="/setting"
@@ -119,14 +112,13 @@ const Sidebar = () => {
         <FaCog
           className={`
             h-6 w-6 
-            ${
-              activeTab === "setting"
-                ? theme === "dark"
-                  ? "text-gray-800"
-                  : ""
-                : theme === "dark"
-                  ? "text-gray-300"
-                  : "text-gray-800"
+            ${activeTab === "setting"
+              ? theme === "dark"
+                ? "text-gray-800"
+                : ""
+              : theme === "dark"
+                ? "text-gray-300"
+                : "text-gray-800"
             }`}
         />
       </Link>
@@ -147,9 +139,9 @@ const Sidebar = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
       className={`
-        ${isMobile ? "fixed bottom-0 left-0 right-0 h-16 " : "w-16 h-screen border-r-2"}
+        ${isMobile ? "fixed bottom-0 left-0 right-0 h-16 z-50" : "w-16 h-screen border-r-2"}
         ${theme === 'dark' ? "bg-gray-800 border-gray-600" : "bg-[rgb(239,242,245)] border-gray-300"}
-        bg-opacity-90 flex items-center py-4 shadow-lg
+        bg-opacity-100 flex items-center py-4 shadow-lg
         ${isMobile ? "flex-row justify-around" : "flex-col justify-between"}
       `}
     >

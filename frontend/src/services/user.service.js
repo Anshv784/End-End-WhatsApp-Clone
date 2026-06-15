@@ -1,4 +1,3 @@
-// src/services/authService.js
 import {axiosInstance} from "./url.service";
 
 // Send OTP
@@ -44,7 +43,6 @@ export const updateUserProfile = async (updateData) => {
 export const checkUserAuth = async () => {
   try {
     const response = await axiosInstance.get("/auth/check-auth");
-    console.log(response);
     if (response.data.status === "success") {
       return { isAuthenticated: true, user: response?.data?.data };
     } else if (response.data.status === "error") {

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { axiosInstance } from "../services/url.service";
 import { getSocket } from "../utils/socket";
+import { getAllUsers } from "../services/user.service";
+import useUserStore from "./userStore";
 
 const useChatStore = create((set, get) => ({
 
@@ -10,6 +12,8 @@ const useChatStore = create((set, get) => ({
   messages: [],
   onlineUsers: new Map(),
   typingUsers: new Map(),
+  users: [],
+  socketListenersInitialized: false,
   loading: false,
   error: null,
 
@@ -18,6 +22,20 @@ const useChatStore = create((set, get) => ({
   initSocketListeners: () => {
     const socket = getSocket();
     if (!socket) return;
+    if (get().socketListenersInitialized) return;
+
+    socket.off("receive_message");
+    socket.off("message_status_update");
+    socket.off("reaction_update");
+    socket.off("message_deleted");
+    socket.off("message_error");
+    socket.off("user_typing");
+    socket.off("user_status");
+
+    // receive message
+    socket.on("receive_message", (message) => {
+      get().receiveMessage(message);
+    });
 
     // update message status
     socket.on("message_status_update", ({ messageId, messageStatus }) => {
@@ -38,7 +56,7 @@ const useChatStore = create((set, get) => ({
     });
 
     // handle message delete
-    socket.on("message_deleted", ({ deletedMessageId }) => {
+    socket.on("message_deleted", (deletedMessageId) => {
       set((state) => ({
         messages: state.messages.filter(
           (msg) => msg._id !== deletedMessageId
@@ -55,15 +73,13 @@ const useChatStore = create((set, get) => ({
     socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
       set((state) => {
         const newTypingUsers = new Map(state.typingUsers);
+        const currentSet = newTypingUsers.get(conversationId) || new Set();
+        const newSet = new Set(currentSet);
 
-        if (!newTypingUsers.has(conversationId)) {
-          newTypingUsers.set(conversationId, new Set());
-        }
+        if (isTyping) newSet.add(userId);
+        else newSet.delete(userId);
 
-        const typingSet = newTypingUsers.get(conversationId);
-
-        if (isTyping) typingSet.add(userId);
-        else typingSet.delete(userId);
+        newTypingUsers.set(conversationId, newSet);
 
         return { typingUsers: newTypingUsers };
       });
@@ -73,17 +89,42 @@ const useChatStore = create((set, get) => ({
     socket.on("user_status", ({ userId, isOnline, lastSeen }) => {
       set((state) => {
         const newOnlineUsers = new Map(state.onlineUsers);
-        newOnlineUsers.set(userId, { isOnline, lastSeen });
+        newOnlineUsers.set(String(userId), { isOnline, lastSeen });
         return { onlineUsers: newOnlineUsers };
       });
     });
+
+    set({ socketListenersInitialized: true });
+  },
+
+  fetchUsers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await getAllUsers();
+      if (response.status === "success") {
+        const sortedUsers = [...response.data].sort((a, b) => {
+          const timeA = a.conversation?.lastMessage?.createdAt ? new Date(a.conversation.lastMessage.createdAt) : 0;
+          const timeB = b.conversation?.lastMessage?.createdAt ? new Date(b.conversation.lastMessage.createdAt) : 0;
+          return timeB - timeA;
+        });
+        set({ users: sortedUsers, loading: false });
+      } else {
+        set({ loading: false });
+      }
+      get().initSocketListeners();
+    } catch (error) {
+      set({
+        error: error?.message || "Failed to fetch users",
+        loading: false,
+      });
+    }
   },
 
   fetchConversations: async () => {
     set({ loading: true, error: null });
 
     try {
-      const { data } = await axiosInstance.get("/chats/conversations");
+      const { data } = await axiosInstance.get("/chat/conversations");
       set({ conversations: data, loading: false });
 
       get().initSocketListeners();
@@ -105,7 +146,7 @@ const useChatStore = create((set, get) => ({
 
     try {
       const { data } = await axiosInstance.get(
-        `/chats/conversations/${conversationId}/messages`
+        `/chat/conversations/${conversationId}/messages`
       );
 
       const messageArray = data?.data || data || [];
@@ -129,18 +170,57 @@ const useChatStore = create((set, get) => ({
   receiveMessage: (message) => {
     if (!message) return;
 
-    const { currentConversation, currentUser, messages } = get();
+    const { currentConversation, messages } = get();
+    const currentUser = useUserStore.getState().user;
 
     const messageExists = messages.some(
       (msg) => msg._id === message._id
     );
     if (messageExists) return;
 
-    if (message.conversation === currentConversation) {
+    const msgConvId = String(message.conversation?._id || message.conversation || "");
+    const curConvId = String(currentConversation || "");
+    if (msgConvId && curConvId && msgConvId === curConvId) {
       set((state) => ({
         messages: [...state.messages, message],
       }));
     }
+
+    // update user list (contacts) in real time
+    set((state) => {
+      const updatedUsers = state.users.map((u) => {
+        const isTargetUser =
+          (message.sender?._id === u._id && message.receiver?._id === currentUser?._id) ||
+          (message.receiver?._id === u._id && message.sender?._id === currentUser?._id) ||
+          (message.sender === u._id && message.receiver === currentUser?._id) ||
+          (message.receiver === u._id && message.sender === currentUser?._id);
+
+        if (isTargetUser) {
+          const prevConv = u.conversation || {};
+          return {
+            ...u,
+            conversation: {
+              ...prevConv,
+              _id: message.conversation,
+              lastMessage: message,
+              unreadCount:
+                message.receiver === currentUser?._id || message.receiver?._id === currentUser?._id
+                  ? (prevConv.unreadCount || 0) + 1
+                  : prevConv.unreadCount || 0,
+            },
+          };
+        }
+        return u;
+      });
+
+      const sortedUsers = [...updatedUsers].sort((a, b) => {
+        const timeA = a.conversation?.lastMessage?.createdAt ? new Date(a.conversation.lastMessage.createdAt) : 0;
+        const timeB = b.conversation?.lastMessage?.createdAt ? new Date(b.conversation.lastMessage.createdAt) : 0;
+        return timeB - timeA;
+      });
+
+      return { users: sortedUsers };
+    });
 
     // update conversation preview
     set((state) => {
@@ -167,13 +247,14 @@ const useChatStore = create((set, get) => ({
     });
 
     // auto mark as read
-    if (message.receiver?._id === currentUser?._id) {
+    if (message.receiver?._id === currentUser?._id || message.receiver === currentUser?._id) {
       get().maskMessagesAsRead();
     }
   },
 
   maskMessagesAsRead: async () => {
-    const { messages, currentUser } = get();
+    const { messages, currentConversation } = get();
+    const currentUser = useUserStore.getState().user;
 
     if (!messages.length || !currentUser) return;
 
@@ -181,7 +262,7 @@ const useChatStore = create((set, get) => ({
       .filter(
         (msg) =>
           msg.messageStatus !== "read" &&
-          msg.receiver?._id === currentUser?._id
+          (msg.receiver?._id === currentUser?._id || msg.receiver === currentUser?._id)
       )
       .map((msg) => msg._id)
       .filter(Boolean);
@@ -189,7 +270,7 @@ const useChatStore = create((set, get) => ({
     if (unreadIds.length === 0) return;
 
     try {
-      await axiosInstance.put("/chats/messages/read", {
+      await axiosInstance.put("/chat/messages/read", {
         messageIds: unreadIds,
       });
 
@@ -199,6 +280,18 @@ const useChatStore = create((set, get) => ({
             ? { ...msg, messageStatus: "read" }
             : msg
         ),
+        users: state.users.map((u) => {
+          if (u.conversation?._id === currentConversation) {
+            return {
+              ...u,
+              conversation: {
+                ...u.conversation,
+                unreadCount: 0,
+              },
+            };
+          }
+          return u;
+        }),
       }));
 
       const socket = getSocket();
@@ -215,7 +308,7 @@ const useChatStore = create((set, get) => ({
 
   deleteMessage: async (messageId) => {
     try {
-      await axiosInstance.delete(`/chats/messages/${messageId}`);
+      await axiosInstance.delete(`/chat/messages/${messageId}`);
 
       set((state) => ({
         messages: state.messages.filter(
@@ -225,7 +318,7 @@ const useChatStore = create((set, get) => ({
 
       return true;
     } catch (error) {
-      console.log("error deleting message", error);
+      console.error("error deleting message", error);
       set({
         error: error?.response?.data?.message || error?.message,
       });
@@ -235,13 +328,14 @@ const useChatStore = create((set, get) => ({
 
   addReaction: async (messageId, emoji) => {
     const socket = getSocket();
-    const { currentUser } = get();
+    const currentUser = useUserStore.getState().user;
 
     if (socket && currentUser) {
       socket.emit("add_reaction", {
         messageId,
         emoji,
         userId: currentUser?._id,
+        reactionUserId: currentUser?._id,
       });
     }
   },
@@ -302,9 +396,12 @@ const useChatStore = create((set, get) => ({
       messages: [],
       onlineUsers: new Map(),
       typingUsers: new Map(),
+      users: [],
+      socketListenersInitialized: false,
     });
   },
-
 }));
+
+export default useChatStore;
 
 

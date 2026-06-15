@@ -1,4 +1,3 @@
-import Message from "../models/messages.model.js";
 import Status from "../models/status.model.js";
 import response from "../utils/responseHandler.js";
 import {uploadFileToCloudinary} from "../lib/cloudinaryConfig.js";
@@ -33,7 +32,7 @@ export const createStatus = async (req, res) => {
     }
 
     if (!content && !mediaUrl) {
-      return response(res, 400, "Message content is requierd");
+      return response(res, 400, "Status content is required");
     }
 
     const expiresAt = new Date();
@@ -50,7 +49,7 @@ export const createStatus = async (req, res) => {
 
     const populatedStatus = await Status.findOne(status?._id)
       .populate("user", "username profilePicture")
-      .populate("viewers", "username profilePicture");
+      .populate("viewers.user", "username profilePicture");
       
 
       //emit socket event
@@ -77,10 +76,10 @@ export const getStatus = async (req, res) => {
       expiresAt: { $gt: new Date() },
     })
       .populate("user", "username profilePicture")
-      .populate("viewers", "username profilePicture")
+      .populate("viewers.user", "username profilePicture isOnline about")
       .sort({ createdAt: -1 });
 
-    return response(res, 200, "statuses retrived successfully", statuses);
+    return response(res, 200, "statuses retrieved successfully", statuses);
   } catch (error) {
     console.error(error);
     return response(res, 500, "Internal server error");
@@ -98,20 +97,22 @@ export const viewStatus = async (req, res) => {
       return response(res, 404, "Status not found");
     }
 
-    if (!status.viewers.includes(userId)) {
-      status.viewers.push(userId);
+    const alreadyViewed = status.viewers.some(
+      (v) => v.user.toString() === userId
+    );
+
+    if (!alreadyViewed) {
+      status.viewers.push({ user: userId, viewedAt: new Date() });
       await status.save();
-    } else {
-      console.log("user already viewed the status");
     }
 
     const updateStatus = await Status.findById(statusId)
       .populate("user", "username profilePicture")
-      .populate("viewers", "username profilePicture");
+      .populate("viewers.user", "username profilePicture isOnline about");
 
       //emit socket event
       if(req.io && req.socketUserMap){
-        const statusOwnerSocketId = req.socketUserMap.get(status.user._id.toString());
+        const statusOwnerSocketId = req.socketUserMap.get(status.user.toString());
         if(statusOwnerSocketId){
           const viewData = {
             statusId,
@@ -120,9 +121,7 @@ export const viewStatus = async (req, res) => {
             viewers : updateStatus.viewers
           }
 
-          res.io.to(statusOwnerSocketId).emit("status_viewed",viewData);
-        }else{
-          console.log("Status owner is not connected");
+          req.io.to(statusOwnerSocketId).emit("status_viewed",viewData);
         }
       }
 

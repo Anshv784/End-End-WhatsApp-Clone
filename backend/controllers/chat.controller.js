@@ -1,6 +1,7 @@
 import response from "../utils/responseHandler.js";
-import Conversation from "../models/conversation.model.js"; 
+import Conversation from "../models/conversation.model.js";
 import Message from "../models/messages.model.js";
+import { uploadFileToCloudinary } from "../lib/cloudinaryConfig.js";
 
 
 export const sendMessage = async (req, res) => {
@@ -63,24 +64,28 @@ export const sendMessage = async (req, res) => {
     if (message?.content) {
       conversation.lastMessage = message?._id;
     }
-    conversation.unreadCount += 1;
+    if (!conversation.unreadCounts) {
+      conversation.unreadCounts = new Map();
+    }
+    const currentUnread = conversation.unreadCounts.get(receiverId) || 0;
+    conversation.unreadCounts.set(receiverId, currentUnread + 1);
+    conversation.unreadCount = currentUnread + 1; // legacy support
     await conversation.save();
 
     const populatedMessage = await Message.findOne(message?._id)
       .populate("sender", "username profilePicture")
       .populate("receiver", "username profilePicture");
 
-      //emit socket event for realtime
-      if(req.io && req.socketUserMap){
-        const receiverSocketId = req.socketUserMap.get(receiverId);
-        if(receiverId){
-          req.io.to(receiverSocketId).emit("recieve_message" , populatedMessage);
-          message.messageStatus = "delivered";
-          await message.save();
-        }
+    //emit socket event for realtime
+    if (req.io) {
+      req.io.to(String(receiverId)).emit("receive_message", populatedMessage);
+      if (req.socketUserMap?.has(String(receiverId))) {
+        message.messageStatus = "delivered";
+        await message.save();
       }
+    }
 
-    return response(res, 201, "Message send successfully", populatedMessage);
+    return response(res, 201, "Message sent successfully", populatedMessage);
 
   } catch (error) {
     return response(res, 500, "Something went wrong", error.message);
@@ -90,7 +95,7 @@ export const sendMessage = async (req, res) => {
 export const getConversation = async (req, res) => {
   const userId = req.user.userId;
   try {
-    let conversation = await Conversation.find({
+    let conversations = await Conversation.find({
       participants: userId,
     })
       .populate("participants", "username profilePicture isOnline lastSeen")
@@ -101,9 +106,23 @@ export const getConversation = async (req, res) => {
           select: "username profilePicture",
         },
       })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean();
 
-    return response(res, 201, "Conversation get successfully", conversation);
+    conversations = conversations.map(conv => {
+      const unreadCounts = conv.unreadCounts;
+      const count = (unreadCounts && typeof unreadCounts.get === 'function')
+        ? (unreadCounts.get(userId.toString()) || 0)
+        : (unreadCounts && typeof unreadCounts === 'object')
+          ? (unreadCounts[userId.toString()] || 0)
+          : 0;
+      return {
+        ...conv,
+        unreadCount: count
+      };
+    });
+
+    return response(res, 201, "Conversations retrieved successfully", conversations);
   } catch (error) {
     console.error(error);
     return response(res, 500, "Internal server error");
@@ -111,16 +130,16 @@ export const getConversation = async (req, res) => {
 };
 
 export const getMessages = async (req, res) => {
-  const { conversationId } = req.params; // 👈 FIX
+  const { conversationId } = req.params;
   const userId = req.user.userId;
   try {
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      return response(res, 404, "Conversion not found");
+      return response(res, 404, "Conversation not found");
     }
 
     if (!conversation.participants.includes(userId)) {
-      return response(res, 403, "Not authorized to view this conversion");
+      return response(res, 403, "Not authorized to view this conversation");
     }
 
     const messages = await Message.find({ conversation: conversationId })
@@ -137,10 +156,14 @@ export const getMessages = async (req, res) => {
       { $set: { messageStatus: "read" } }
     );
 
+    if (!conversation.unreadCounts) {
+      conversation.unreadCounts = new Map();
+    }
+    conversation.unreadCounts.set(userId.toString(), 0);
     conversation.unreadCount = 0;
     await conversation.save();
 
-    return response(res, 200, "Message retrived", messages);
+    return response(res, 200, "Messages retrieved", messages);
   } catch (error) {
     console.error(error);
     return response(res, 500, "Internal server error");
@@ -163,20 +186,20 @@ export const markAsRead = async (req, res) => {
     );
 
     //notify to original sender
-      if(req.io && req.socketUserMap){
-        for(const message of messages){
-          const senderSocketId = req.socketUserMap.get(message.sender.toString());
-          if(senderSocketId){
-            const updatedMessage = {
-              id : message._id,
-              messageStatus : "read",
-            };
+    if (req.io && req.socketUserMap) {
+      for (const message of messages) {
+        const senderSocketId = req.socketUserMap.get(message.sender.toString());
+        if (senderSocketId) {
+          const updatedMessage = {
+            id: message._id,
+            messageStatus: "read",
+          };
 
-            req.io.to(senderSocketId).emit("message_read",updatedMessage);
-            await message.save();
-          }
+          req.io.to(senderSocketId).emit("message_read", updatedMessage);
+          await message.save();
         }
       }
+    }
     return response(res, 200, "Messages marked as read", messages);
   } catch (error) {
     console.error(error);
@@ -199,11 +222,11 @@ export const deleteMessage = async (req, res) => {
 
     await message.deleteOne();
 
-    if(req.io && req.socketUserMap){
-        const recieverSocketId = req.socketUserMap.get(message.receiver.toString());
-        if(recieverSocketId){
-          req.io.to(recieverSocketId).emit("message_deleted",messageId);
-        }
+    if (req.io && req.socketUserMap) {
+      const recieverSocketId = req.socketUserMap.get(message.receiver.toString());
+      if (recieverSocketId) {
+        req.io.to(recieverSocketId).emit("message_deleted", messageId);
+      }
     }
 
     return response(res, 200, "Message deleted successfully");

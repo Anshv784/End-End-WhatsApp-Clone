@@ -9,22 +9,30 @@ import UserDetails from './components/UserDetails';
 import Status from './pages/status-section/Status';
 import Setting  from './pages/setting-section/Setting';
 import useUserStore from './store/userStore';
+import useChatStore from './store/chatStore';
 import { useEffect } from 'react';
-import initializeSocket from '../../backend/services/socketService';
-import { disconnectSocket } from './services/chat.service';
+import { getSocket, disconnectSocket } from './services/chat.service';
 
 function App() {
   const {user} = useUserStore();
+  const { initSocketListeners } = useChatStore();
 
   useEffect(() => {
-    if(user){
-      const socket = initializeSocket();
+    if(user?._id){
+      const socket = getSocket();
+      if (socket && socket.connected) {
+        socket.emit("user_connected", user._id);
+      }
+      initSocketListeners();
     }
 
     return () => {
-      disconnectSocket();
-    }
-  },[user])
+      if (!user) {
+        disconnectSocket();
+        useChatStore.setState({ socketListenersInitialized: false });
+      }
+    };
+  },[user, initSocketListeners])
   return (
     <>
     <ToastContainer position='top-right' autoClose={3000}/>

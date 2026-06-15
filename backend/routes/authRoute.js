@@ -8,7 +8,7 @@ export const authRouter = express.Router();
 
 authRouter.post('/send-otp',sendOtp);
 authRouter.post('/verify-otp',verifyOtp);
-authRouter.get('/log-out',logOut);
+authRouter.get('/logout',logOut);
 
 
 //protected routes

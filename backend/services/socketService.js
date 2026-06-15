@@ -2,16 +2,24 @@ import { Server } from "socket.io";
 import User from "../models/user.model.js";
 import Message from "../models/messages.model.js";
 
-// Map to store online users -> userId , socketId
 const onlineUsers = new Map();
-
-// Map to track typing status -> userId -> { conversationId: boolean }
 const typingUsers = new Map();
 
 const initializeSocket = (server) => {
+    let allowedOrigins = "http://localhost:3000";
+    if (process.env.FRONTEND_URL) {
+        allowedOrigins = process.env.FRONTEND_URL;
+    } else if (process.env.ACCESS_POINT) {
+        try {
+            allowedOrigins = JSON.parse(process.env.ACCESS_POINT);
+        } catch (e) {
+            allowedOrigins = process.env.ACCESS_POINT;
+        }
+    }
+
     const io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL,
+            origin: allowedOrigins,
             credentials: true,
             methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         },
@@ -19,15 +27,14 @@ const initializeSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-        console.log(`User connected: ${socket.id}`);
         let userId = null;
 
         // Handle user connection
         socket.on("user_connected", async (connectingUserId) => {
             try {
-                userId = connectingUserId;
+                userId = String(connectingUserId);
                 onlineUsers.set(userId, socket.id);
-                socket.join(userId); // join personal room for direct communication
+                socket.join(userId);
 
                 // update user status in db
                 await User.findByIdAndUpdate(userId, {
@@ -55,9 +62,11 @@ const initializeSocket = (server) => {
         // Forward message to receiver
         socket.on("send_message", async (message) => {
             try {
-                const receiverSocketId = onlineUsers.get(message.receiver?._id);
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("receive_message", message);
+                const receiverId =
+                    message.receiver?._id?.toString?.() ||
+                    message.receiver?.toString?.();
+                if (receiverId) {
+                    io.to(receiverId).emit("receive_message", message);
                 }
             } catch (error) {
                 console.error("Error sending message", error);
@@ -185,7 +194,7 @@ const initializeSocket = (server) => {
                     io.to(receiverSocket).emit("reaction_update", reactionUpdated);
 
             } catch (error) {
-                console.log("Error handling reaction", error);
+                console.error("Error handling reaction", error);
             }
         });
 
@@ -199,7 +208,11 @@ const initializeSocket = (server) => {
                 // clear all typing timers
                 if (typingUsers.has(userId)) {
                     const userTyping = typingUsers.get(userId);
-                    clearTimeout(userTyping.timer);
+                    Object.keys(userTyping).forEach((key) => {
+                        if (key.endsWith("_timeout")) {
+                            clearTimeout(userTyping[key]);
+                        }
+                    });
                     typingUsers.delete(userId);
                 }
 
@@ -215,7 +228,6 @@ const initializeSocket = (server) => {
                 });
 
                 socket.leave(userId);
-                console.log(`user ${userId} disconnected`);
             } catch (error) {
                 console.error("Error handling disconnection", error);
             }

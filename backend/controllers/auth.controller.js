@@ -37,7 +37,7 @@ export const sendOtp = async (req, res) => {
     user = await User.findOne({ phoneNumber });
     if (!user) user = new User({ phoneNumber });
 
-    await sendOtpToPhoneNumber(fullPhoneNumber); // handled by Twilio Service 
+    await sendOtpToPhoneNumber(fullPhoneNumber);
     await user.save();
 
     return response(res, 200, "OTP sent to your phone", { phoneNumber });
@@ -49,13 +49,11 @@ export const sendOtp = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   const { phoneNumber, phoneSuffix, email, otp } = req.body;
-  console.log(req.body)
   let user;
 
   try {
     if (email) {
-      user = await User.findOne({email});
-      console.log({email})
+      user = await User.findOne({ email });
       if (!user) return response(res, 404, "User not found");
 
       const now = new Date();
@@ -67,13 +65,13 @@ export const verifyOtp = async (req, res) => {
       user.emailOtp = null;
       user.emailOtpExpiry = null;
       await user.save();
-    } 
+    }
     else {
       if (!phoneNumber || !phoneSuffix) {
         return response(res, 400, "Phone number and phone suffix are required");
       }
       const fullPhoneNumber = `${phoneSuffix}${phoneNumber}`;
-      user = await User.findOne({ phoneNumber});
+      user = await User.findOne({ phoneNumber });
       if (!user) return response(res, 404, "User not found");
 
       const result = await verifyPhoneOtp(fullPhoneNumber, otp);
@@ -90,10 +88,9 @@ export const verifyOtp = async (req, res) => {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 365,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
     });
 
-    console.log("Otp verified")
     return response(res, 200, "otp verified successfully", { token, user });
   } catch (error) {
     console.error(error);
@@ -120,8 +117,6 @@ export const updateProfile = async (req, res) => {
     if (agreed) user.agreed = agreed;
     if (about) user.about = about;
 
-    console.log(user);
-
     await user.save();
 
     return response(res, 200, "user profile updated successfully", user);
@@ -140,7 +135,7 @@ export const getAllUsers = async (req, res) => {
 
     const usersWithConversation = await Promise.all(
       users.map(async (user) => {
-        const conversation = await Conversation.findOne({
+        let conversation = await Conversation.findOne({
           participants: { $all: [loggedInUser, user?._id] }
         })
           .populate({
@@ -148,6 +143,19 @@ export const getAllUsers = async (req, res) => {
             select: "content createdAt sender receiver"
           })
           .lean();
+
+        if (conversation) {
+          const unreadCounts = conversation.unreadCounts;
+          const count = (unreadCounts && typeof unreadCounts.get === 'function')
+            ? (unreadCounts.get(loggedInUser.toString()) || 0)
+            : (unreadCounts && typeof unreadCounts === 'object')
+              ? (unreadCounts[loggedInUser.toString()] || 0)
+              : 0;
+          conversation = {
+            ...conversation,
+            unreadCount: count
+          };
+        }
 
         return {
           ...user,
