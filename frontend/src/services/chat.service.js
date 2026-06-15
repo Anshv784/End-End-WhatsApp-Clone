@@ -6,7 +6,15 @@ let socket = null;
 const initializeSocket = () => {
     if (socket) return socket;
 
-    const BACKEND_URL = import.meta.env.VITE_API_URL || window.location.origin;
+    const getBackendUrl = () => {
+        const envUrl = import.meta.env.VITE_API_URL;
+        if (envUrl && window.location.hostname !== "localhost" && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
+            return window.location.origin;
+        }
+        return envUrl || window.location.origin;
+    };
+
+    const BACKEND_URL = getBackendUrl();
 
     socket = io(BACKEND_URL, {
         withCredentials: true,
