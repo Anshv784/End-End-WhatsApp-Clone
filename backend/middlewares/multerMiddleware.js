@@ -19,8 +19,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const uploadDir = process.env.VERCEL ? "/tmp" : "uploads/";
+
 export const multerMiddleware = multer({
-  dest: "uploads/",
+  dest: uploadDir,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter
 }).single("media");
